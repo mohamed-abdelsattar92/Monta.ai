@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "montaai"
+version = "0.1.0"
+description = ""
+authors = ["Mohamed Abdel Sattar <mohamed.abdelsattar92@hotmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+openai = "^1.21.2"
+flask = "^3.0.3"
+flask-jwt-extended = "^4.6.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
