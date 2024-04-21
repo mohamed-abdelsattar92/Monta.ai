@@ -11,7 +11,7 @@ openai_client = openai.OpenAI()
 conversation_blueprint = Blueprint("conversation", __name__)
 
 
-@conversation_blueprint.route("/create_new_conversation", methods=["POST"])
+@conversation_blueprint.route("/conversation", methods=["POST"])
 @jwt_required()
 def create_new_conversation():
     user_id = get_jwt_identity()
@@ -27,7 +27,7 @@ def create_new_conversation():
     )
 
 
-@conversation_blueprint.route("/get_conversation/<uuid:id>", methods=["GET"])
+@conversation_blueprint.route("/conversation/<uuid:id>", methods=["GET"])
 @jwt_required()
 def get_conversation(id: UUID):
     user_id = get_jwt_identity()
