@@ -77,9 +77,9 @@ def send_message(conversation_id: UUID):
         )
 
 
-@conversation_blueprint.route("/v1/history", methods=["GET"])
+@conversation_blueprint.route("/v1/conversations", methods=["GET"])
 @jwt_required()
 def history():
     user_id = get_jwt_identity()
     user_history = chat_history.get(user_id, [])
-    return jsonify({"history": user_history}), 200
+    return jsonify({"conversations": user_history}), 200
