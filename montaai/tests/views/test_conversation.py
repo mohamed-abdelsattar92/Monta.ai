@@ -33,7 +33,7 @@ def create_test_conversation():
 def test_create_new_conversation(client: FlaskClient):
     access_token = get_test_access_token()
     response = client.post(
-        "/create_new_conversation", headers={"Authorization": f"Bearer {access_token}"}
+        "/conversation", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
     assert "New conversation created with id:" in response.get_json()["message"]
@@ -43,7 +43,7 @@ def test_get_conversation_success(client: FlaskClient):
     access_token = get_test_access_token()
     conversation_id = create_test_conversation()
     response = client.get(
-        f"/get_conversation/{conversation_id}",
+        f"/conversation/{conversation_id}",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test_get_conversation_failure(client: FlaskClient):
     access_token = get_test_access_token()
     non_existent_id = uuid4()
     response = client.get(
-        f"/get_conversation/{non_existent_id}",
+        f"/conversation/{non_existent_id}",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
