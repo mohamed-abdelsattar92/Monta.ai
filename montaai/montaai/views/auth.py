@@ -6,12 +6,13 @@ from datetime import timedelta
 
 auth_blueprint = Blueprint('auth', __name__)
 
-@auth_blueprint.route("/login", methods=["POST"])
+@auth_blueprint.route("/v1/login", methods=["POST"])
 def login():
+    allowed_users = {"admin", "user1", "user2", "user3"}
     username = request.json.get("username")
     password = request.json.get("password")
 
-    if username == "admin" and password == "admin":
+    if username in allowed_users and password == "admin":
         access_token = create_access_token(
             identity=username, expires_delta=timedelta(minutes=30)
         )

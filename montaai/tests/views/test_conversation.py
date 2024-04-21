@@ -33,7 +33,7 @@ def create_test_conversation():
 def test_create_new_conversation(client: FlaskClient):
     access_token = get_test_access_token()
     response = client.post(
-        "/conversation", headers={"Authorization": f"Bearer {access_token}"}
+        "/v1/conversation", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
     assert "New conversation created with id:" in response.get_json()["message"]
@@ -43,7 +43,7 @@ def test_get_conversation_success(client: FlaskClient):
     access_token = get_test_access_token()
     conversation_id = create_test_conversation()
     response = client.get(
-        f"/conversation/{conversation_id}",
+        f"/v1/conversation/{conversation_id}",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
@@ -54,7 +54,7 @@ def test_get_conversation_failure(client: FlaskClient):
     access_token = get_test_access_token()
     non_existent_id = uuid4()
     response = client.get(
-        f"/conversation/{non_existent_id}",
+        f"/v1/conversation/{non_existent_id}",
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
@@ -89,8 +89,8 @@ def test_send_message_success(client: FlaskClient, mocker):
     mock_create.return_value = create_namedtuple()
 
     response = client.post(
-        f"/send_message/{conversation_id}",
-        json={"input": "Hello, world!"},
+        f"/v1/conversation/{conversation_id}/message",
+        json={"message": "Hello, world!"},
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
@@ -101,8 +101,8 @@ def test_send_message_failure(client: FlaskClient):
     access_token = get_test_access_token()
     non_existent_id = uuid4()
     response = client.post(
-        f"/send_message/{non_existent_id}",
-        json={"input": ", world!"},
+        f"/v1/conversation/{non_existent_id}/message",
+        json={"message": ", world!"},
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
@@ -112,7 +112,7 @@ def test_send_message_failure(client: FlaskClient):
 def test_history(client: FlaskClient):
     access_token = get_test_access_token()
     response = client.get(
-        "/history", headers={"Authorization": f"Bearer {access_token}"}
+        "/v1/conversations", headers={"Authorization": f"Bearer {access_token}"}
     )
     assert response.status_code == 200
-    assert "history" in response.get_json()
+    assert "conversations" in response.get_json()
