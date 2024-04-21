@@ -89,8 +89,8 @@ def test_send_message_success(client: FlaskClient, mocker):
     mock_create.return_value = create_namedtuple()
 
     response = client.post(
-        f"/send_message/{conversation_id}",
-        json={"input": "Hello, world!"},
+        f"/conversation/{conversation_id}/message",
+        json={"message": "Hello, world!"},
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 200
@@ -101,8 +101,8 @@ def test_send_message_failure(client: FlaskClient):
     access_token = get_test_access_token()
     non_existent_id = uuid4()
     response = client.post(
-        f"/send_message/{non_existent_id}",
-        json={"input": ", world!"},
+        f"/conversation/{non_existent_id}/message",
+        json={"message": ", world!"},
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert response.status_code == 404
