@@ -11,7 +11,7 @@ openai_client = openai.OpenAI()
 conversation_blueprint = Blueprint("conversation", __name__)
 
 
-@conversation_blueprint.route("/conversation", methods=["POST"])
+@conversation_blueprint.route("/v1/conversation", methods=["POST"])
 @jwt_required()
 def create_new_conversation():
     user_id = get_jwt_identity()
@@ -27,7 +27,7 @@ def create_new_conversation():
     )
 
 
-@conversation_blueprint.route("/conversation/<uuid:id>", methods=["GET"])
+@conversation_blueprint.route("/v1/conversation/<uuid:id>", methods=["GET"])
 @jwt_required()
 def get_conversation(id: UUID):
     user_id = get_jwt_identity()
@@ -40,7 +40,7 @@ def get_conversation(id: UUID):
         return jsonify({"Error": f"{e}"})
 
 
-@conversation_blueprint.route("/conversation/<uuid:conversation_id>/message", methods=["POST"])
+@conversation_blueprint.route("/v1/conversation/<uuid:conversation_id>/message", methods=["POST"])
 @jwt_required()
 def send_message(conversation_id: UUID):
     user_input = request.json.get("message")
@@ -77,7 +77,7 @@ def send_message(conversation_id: UUID):
         )
 
 
-@conversation_blueprint.route("/history", methods=["GET"])
+@conversation_blueprint.route("/v1/history", methods=["GET"])
 @jwt_required()
 def history():
     user_id = get_jwt_identity()
