@@ -40,13 +40,13 @@ def get_conversation(id: UUID):
         return jsonify({"Error": f"{e}"})
 
 
-@conversation_blueprint.route("/send_message/<uuid:conversation_id>", methods=["POST"])
+@conversation_blueprint.route("/conversation/<uuid:conversation_id>/message", methods=["POST"])
 @jwt_required()
 def send_message(conversation_id: UUID):
-    user_input = request.json.get("input")
+    user_input = request.json.get("message")
 
     if not user_input:
-        return jsonify({"error": "Input data missing"}), 400
+        return jsonify({"error": "Message can't be empty"}), 400
 
     user_id = get_jwt_identity()
     conversation_context = chat_history.get(user_id, {}).get(str(conversation_id))
