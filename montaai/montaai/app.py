@@ -3,6 +3,7 @@ from flask_jwt_extended import JWTManager
 import jwt as jwtLib
 
 from montaai.config import Config
+from montaai.helpers.database import db
 from montaai.views.auth import auth_blueprint
 from montaai.views.conversation import conversation_blueprint
 from montaai.views.home import home_blueprint
@@ -10,6 +11,7 @@ from montaai.views.home import home_blueprint
 app = Flask(__name__)
 JWTManager(app)
 app.config.from_object(Config)
+db.init_app(app)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(conversation_blueprint)
 app.register_blueprint(home_blueprint)
