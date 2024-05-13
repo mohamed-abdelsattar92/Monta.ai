@@ -41,6 +41,7 @@ def login():
         random.choices(string.ascii_letters + string.digits, k=32)
     )
 
+    session["username"] = username
     session["verification_token"] = verification_token
     session["verification_token_expiration"] = (
         datetime.utcnow() + timedelta(minutes=10)
@@ -66,6 +67,7 @@ def verify():
     if not username or not verification_code:
         return jsonify({"error": "Missing username or verification code"}), 400
 
+    verification_username = session.get("username")
     verification_token = session.get("verification_token")
     verification_token_expiration = session.get("verification_token_expiration")
     if (
@@ -74,7 +76,7 @@ def verify():
         or datetime.utcnow() > datetime.fromisoformat(verification_token_expiration)
     ):
         return jsonify({"error": "Verification token expired or not found"}), 401
-    if verification_token and verification_code == verification_token:
+    if verification_token and verification_code == verification_token and verification_username == username:
         access_token = create_access_token(
             identity=username, expires_delta=timedelta(minutes=30)
         )
