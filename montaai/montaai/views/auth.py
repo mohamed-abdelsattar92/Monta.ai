@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session
 from flask_jwt_extended import (
     create_access_token,
 )
-from datetime import timedelta, datetime, UTC
+from datetime import timedelta, datetime
 from montaai.services.user_service import UserService
 
 import random
@@ -43,7 +43,7 @@ def login():
 
     session["verification_token"] = verification_token
     session["verification_token_expiration"] = (
-        datetime.now(UTC) + timedelta(minutes=10)
+        datetime.utcnow() + timedelta(minutes=10)
     ).isoformat()
 
     # message = client.messages.create(body=f'Your verification token is: {verification_token}', from_=twilio_from_number, to=user.phone_number)
@@ -71,7 +71,7 @@ def verify():
     if (
         not verification_token
         or not verification_token_expiration
-        or datetime.now(UTC) > datetime.fromisoformat(verification_token_expiration)
+        or datetime.utcnow() > datetime.fromisoformat(verification_token_expiration)
     ):
         return jsonify({"error": "Verification token expired or not found"}), 401
     if verification_token and verification_code == verification_token:

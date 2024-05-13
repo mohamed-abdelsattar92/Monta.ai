@@ -1,5 +1,6 @@
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 import jwt as jwtLib
 
 from montaai.config import Config
@@ -12,6 +13,7 @@ app = Flask(__name__)
 JWTManager(app)
 app.config.from_object(Config)
 db.init_app(app)
+migrate = Migrate(app, db)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(conversation_blueprint)
 app.register_blueprint(home_blueprint)
