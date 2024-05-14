@@ -8,6 +8,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from montaai.helpers.database import redis_client, db
 from montaai.models.conversations import Conversation
 from montaai.models.messages import Message
+from montaai.models.users import User
 
 openai_client = openai.OpenAI()
 
@@ -18,6 +19,7 @@ conversation_blueprint = Blueprint("conversation", __name__)
 @jwt_required()
 def create_new_conversation():
     user_id = get_jwt_identity()
+    user_object = User.query.filter_by(username=user_id).first()
     new_conversation_id = uuid4()
 
     current_conversation_key = f"conversation:{user_id}:current"
@@ -27,14 +29,14 @@ def create_new_conversation():
         conversation_data = json.loads(current_conversation.decode("utf-8"))
 
         existing_conversation: Conversation = Conversation.query.filter_by(
-            user_id=user_id, conversation_id=conversation_data["id"]
+            user_id=user_object.id, conversation_id=conversation_data["id"]
         ).first()
 
         if existing_conversation:
             existing_conversation.messages = conversation_data["messages"]
         else:
             new_db_conversation = Conversation(
-                user_id=user_id, conversation_id=conversation_data["id"]
+                user_id=user_object.id, conversation_id=conversation_data["id"]
             )
             db.session.add(new_db_conversation)
 
@@ -63,9 +65,10 @@ def create_new_conversation():
 @jwt_required()
 def get_conversation(id: UUID):
     user_id = get_jwt_identity()
+    user_object = User.query.filter_by(username=user_id).first()
 
     conversation = Conversation.query.filter_by(
-        user_id=user_id, conversation_id=str(id)
+        user_id=user_object.id, conversation_id=str(id)
     ).first()
 
     if not conversation:
@@ -132,8 +135,9 @@ def send_message():
 @jwt_required()
 def history():
     user_id = get_jwt_identity()
+    user_object = User.query.filter_by(username=user_id).first()
 
-    db_conversations = Conversation.query.filter_by(user_id=user_id).all()
+    db_conversations = Conversation.query.filter_by(user_id=user_object.id).all()
 
     conversation_history = []
 
