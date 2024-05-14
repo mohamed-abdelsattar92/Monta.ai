@@ -29,15 +29,13 @@ def create_new_conversation():
         conversation_data = json.loads(current_conversation.decode("utf-8"))
 
         existing_conversation: Conversation = Conversation.query.filter_by(
-            user_id=user_object.id, conversation_id=conversation_data["id"]
+            id=conversation_data["id"]
         ).first()
 
         if existing_conversation:
             existing_conversation.messages = conversation_data["messages"]
         else:
-            new_db_conversation = Conversation(
-                user_id=user_object.id, conversation_id=conversation_data["id"]
-            )
+            new_db_conversation = Conversation(user_id=user_object.id)
             db.session.add(new_db_conversation)
 
             for message in conversation_data["messages"]:
@@ -67,9 +65,7 @@ def get_conversation(id: UUID):
     user_id = get_jwt_identity()
     user_object = User.query.filter_by(username=user_id).first()
 
-    conversation = Conversation.query.filter_by(
-        user_id=user_object.id, conversation_id=str(id)
-    ).first()
+    conversation = Conversation.query.filter_by(id=str(id)).first()
 
     if not conversation:
         return jsonify({"error": "Conversation not found"}), 404
@@ -145,7 +141,7 @@ def history():
         messages = Message.query.filter_by(conversation_id=conversation.id).all()
         conversation_history.append(
             {
-                "conversation_id": conversation.conversation_id,
+                "conversation_id": conversation.id,
                 "messages": [
                     {"role": message.role, "content": message.content}
                     for message in messages
