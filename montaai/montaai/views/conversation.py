@@ -7,6 +7,7 @@ from montaai.helpers.database import redis_client, db
 from montaai.models.conversations import Conversation
 from montaai.models.messages import Message
 from montaai.models.users import User
+from montaai.helpers import save_current_conversation_to_db
 
 openai_client = openai.OpenAI()
 
@@ -24,32 +25,7 @@ def create_new_conversation():
 
     if current_conversation:
         conversation_data = json.loads(current_conversation.decode("utf-8"))
-
-        existing_conversation: Conversation = Conversation.query.filter_by(
-            id=conversation_data["id"]
-        ).first()
-
-        if existing_conversation:
-            for message in conversation_data["messages"]:
-                new_db_message = Message(
-                    conversation_id=existing_conversation.id,
-                    role=message["role"],
-                    content=message["content"],
-                )
-                db.session.add(new_db_message)
-        else:
-            new_db_conversation_for_current_conversation = Conversation(
-                user_id=user_object.id
-            )
-            db.session.add(new_db_conversation_for_current_conversation)
-
-            for message in conversation_data["messages"]:
-                new_db_message = Message(
-                    conversation_id=new_db_conversation_for_current_conversation.id,
-                    role=message["role"],
-                    content=message["content"],
-                )
-                db.session.add(new_db_message)
+        save_current_conversation_to_db(conversation_data, user_object.id)
 
     new_db_conversation = Conversation(user_id=user_object.id)
     db.session.add(new_db_conversation)
@@ -87,6 +63,8 @@ def get_conversation(id: int):
     }
 
     current_conversation_key = f"conversation:{user_id}:current"
+    current_conversation_data = redis_client.get(current_conversation_key)
+    save_current_conversation_to_db(current_conversation_data, user_id)
     redis_client.set(name=current_conversation_key, value=json.dumps(conversation_data))
 
     return jsonify({f"{id}": conversation_data}), 200
