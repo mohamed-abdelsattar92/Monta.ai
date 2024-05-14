@@ -30,7 +30,13 @@ def create_new_conversation():
         ).first()
 
         if existing_conversation:
-            existing_conversation.messages = conversation_data["messages"]
+            for message in conversation_data["messages"]:
+                new_db_message = Message(
+                    conversation_id=existing_conversation.id,
+                    role=message["role"],
+                    content=message["content"],
+                )
+                db.session.add(new_db_message)
         else:
             new_db_conversation_for_current_conversation = Conversation(
                 user_id=user_object.id
