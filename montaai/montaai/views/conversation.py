@@ -50,7 +50,9 @@ def create_new_conversation():
     db.session.commit()
 
     new_conversation_data = {"id": str(new_db_conversation.id), "messages": []}
-    redis_client.setex(name=current_conversation_key, value=json.dumps(new_conversation_data))
+    redis_client.set(
+        name=current_conversation_key, value=json.dumps(new_conversation_data)
+    )
 
     return (
         jsonify(
@@ -77,7 +79,7 @@ def get_conversation(id: int):
     ]
 
     conversation_key = f"conversation:{user_id}:current"
-    redis_client.setex(name=conversation_key, value=json.dumps(conversation_history))
+    redis_client.set(name=conversation_key, value=json.dumps(conversation_history))
 
     return jsonify({f"{id}": conversation_history}), 200
 
@@ -95,7 +97,14 @@ def send_message():
     conversation_context = redis_client.get(conversation_key)
 
     if not conversation_context:
-        return jsonify({"error": "There's no current conversation, please select a conversation first!"}), 404
+        return (
+            jsonify(
+                {
+                    "error": "There's no current conversation, please select a conversation first!"
+                }
+            ),
+            404,
+        )
 
     conversation_context = json.loads(conversation_context.decode("utf-8"))
 
@@ -114,7 +123,9 @@ def send_message():
             }
         )
 
-        redis_client.setex(name=conversation_key, value=json.dumps(conversation_context))
+        redis_client.set(
+            name=conversation_key, value=json.dumps(conversation_context)
+        )
 
         return jsonify({"response": completions.choices[0].message.content}), 200
     except Exception as e:
