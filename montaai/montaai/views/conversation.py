@@ -32,7 +32,9 @@ def create_new_conversation():
         if existing_conversation:
             existing_conversation.messages = conversation_data["messages"]
         else:
-            new_db_conversation_for_current_conversation = Conversation(user_id=user_object.id)
+            new_db_conversation_for_current_conversation = Conversation(
+                user_id=user_object.id
+            )
             db.session.add(new_db_conversation_for_current_conversation)
 
             for message in conversation_data["messages"]:
@@ -42,13 +44,13 @@ def create_new_conversation():
                     content=message["content"],
                 )
                 db.session.add(new_db_message)
-                
+
     new_db_conversation = Conversation(user_id=user_object.id)
     db.session.add(new_db_conversation)
     db.session.commit()
 
     new_conversation_data = {"id": str(new_db_conversation.id), "messages": []}
-    redis_client.setex(current_conversation_key, json.dumps(new_conversation_data))
+    redis_client.setex(name=current_conversation_key, value=json.dumps(new_conversation_data))
 
     return (
         jsonify(
@@ -75,7 +77,7 @@ def get_conversation(id: int):
     ]
 
     conversation_key = f"conversation:{user_id}:current"
-    redis_client.setex(conversation_key, json.dumps(conversation_history))
+    redis_client.setex(name=conversation_key, value=json.dumps(conversation_history))
 
     return jsonify({f"{id}": conversation_history}), 200
 
@@ -93,7 +95,7 @@ def send_message():
     conversation_context = redis_client.get(conversation_key)
 
     if not conversation_context:
-        return jsonify({"error": "Please enter the correct conversation id!"}), 404
+        return jsonify({"error": "There's no current conversation, please select a conversation first!"}), 404
 
     conversation_context = json.loads(conversation_context.decode("utf-8"))
 
@@ -112,7 +114,7 @@ def send_message():
             }
         )
 
-        redis_client.setex(conversation_key, json.dumps(conversation_context))
+        redis_client.setex(name=conversation_key, value=json.dumps(conversation_context))
 
         return jsonify({"response": completions.choices[0].message.content}), 200
     except Exception as e:
