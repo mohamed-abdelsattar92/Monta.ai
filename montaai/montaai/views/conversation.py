@@ -49,7 +49,7 @@ def create_new_conversation():
     db.session.add(new_db_conversation)
     db.session.commit()
 
-    new_conversation_data = {"id": str(new_db_conversation.id), "messages": []}
+    new_conversation_data = {"id": new_db_conversation.id, "messages": []}
     redis_client.set(
         name=current_conversation_key, value=json.dumps(new_conversation_data)
     )
@@ -66,22 +66,24 @@ def create_new_conversation():
 @jwt_required()
 def get_conversation(id: int):
     user_id = get_jwt_identity()
-    user_object = User.query.filter_by(username=user_id).first()
 
-    conversation = Conversation.query.filter_by(id=str(id)).first()
+    conversation = Conversation.query.filter_by(id=id).first()
 
     if not conversation:
         return jsonify({"error": "Conversation not found"}), 404
 
     messages: Message = Message.query.filter_by(conversation_id=conversation.id).all()
-    conversation_history = [
-        {"role": message.role, "content": message.content} for message in messages
-    ]
+    conversation_data = {
+        "id": conversation.id,
+        "messages": [
+            {"role": message.role, "content": message.content} for message in messages
+        ],
+    }
 
-    conversation_key = f"conversation:{user_id}:current"
-    redis_client.set(name=conversation_key, value=json.dumps(conversation_history))
+    current_conversation_key = f"conversation:{user_id}:current"
+    redis_client.set(name=current_conversation_key, value=json.dumps(conversation_data))
 
-    return jsonify({f"{id}": conversation_history}), 200
+    return jsonify({f"{id}": conversation_data}), 200
 
 
 @conversation_blueprint.route("/v1/conversation/message", methods=["POST"])
@@ -108,24 +110,22 @@ def send_message():
 
     conversation_context = json.loads(conversation_context.decode("utf-8"))
 
-    conversation_context.append({"role": "user", "content": user_input})
+    conversation_context["messages"].append({"role": "user", "content": user_input})
 
     try:
         completions = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=conversation_context,
+            messages=conversation_context["messages"],
         )
 
-        conversation_context.append(
+        conversation_context["messages"].append(
             {
                 "role": completions.choices[0].message.role,
                 "content": completions.choices[0].message.content,
             }
         )
 
-        redis_client.set(
-            name=conversation_key, value=json.dumps(conversation_context)
-        )
+        redis_client.set(name=conversation_key, value=json.dumps(conversation_context))
 
         return jsonify({"response": completions.choices[0].message.content}), 200
     except Exception as e:
