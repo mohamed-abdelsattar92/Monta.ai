@@ -64,6 +64,7 @@ def get_conversation(id: int):
 
     current_conversation_key = f"conversation:{user_id}:current"
     current_conversation_data = redis_client.get(current_conversation_key)
+    current_conversation_data = json.loads(current_conversation_data.decode("utf-8"))
     save_current_conversation_to_db(current_conversation_data, user_id)
     redis_client.set(name=current_conversation_key, value=json.dumps(conversation_data))
 
