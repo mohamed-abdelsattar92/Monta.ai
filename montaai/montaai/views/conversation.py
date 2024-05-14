@@ -161,15 +161,4 @@ def history():
             }
         )
 
-    current_conversation_key = f"conversation:{user_id}:current"
-    current_conversation = redis_client.get(current_conversation_key)
-
-    if current_conversation:
-        conversation_history.append(
-            {
-                "conversation_id": "current",
-                "messages": json.loads(current_conversation.decode("utf-8")),
-            }
-        )
-
     return jsonify({"conversations": conversation_history}), 200
