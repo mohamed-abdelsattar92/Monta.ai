@@ -1,5 +1,3 @@
-from uuid import UUID, uuid4
-
 import openai
 import json
 from flask import Blueprint, jsonify, request
@@ -20,7 +18,6 @@ conversation_blueprint = Blueprint("conversation", __name__)
 def create_new_conversation():
     user_id = get_jwt_identity()
     user_object = User.query.filter_by(username=user_id).first()
-    new_conversation_id = uuid4()
 
     current_conversation_key = f"conversation:{user_id}:current"
     current_conversation = redis_client.get(current_conversation_key)
@@ -35,33 +32,35 @@ def create_new_conversation():
         if existing_conversation:
             existing_conversation.messages = conversation_data["messages"]
         else:
-            new_db_conversation = Conversation(user_id=user_object.id)
-            db.session.add(new_db_conversation)
+            new_db_conversation_for_current_conversation = Conversation(user_id=user_object.id)
+            db.session.add(new_db_conversation_for_current_conversation)
 
             for message in conversation_data["messages"]:
                 new_db_message = Message(
-                    conversation_id=new_db_conversation.id,
+                    conversation_id=new_db_conversation_for_current_conversation.id,
                     role=message["role"],
                     content=message["content"],
                 )
                 db.session.add(new_db_message)
+                
+    new_db_conversation = Conversation(user_id=user_object.id)
+    db.session.add(new_db_conversation)
+    db.session.commit()
 
-        db.session.commit()
-
-    new_conversation_data = {"id": str(new_conversation_id), "messages": []}
+    new_conversation_data = {"id": str(new_db_conversation.id), "messages": []}
     redis_client.setex(current_conversation_key, json.dumps(new_conversation_data))
 
     return (
         jsonify(
-            {"message": f"New conversation created with id: {new_conversation_id}"}
+            {"message": f"New conversation created with id: {new_db_conversation.id}"}
         ),
         200,
     )
 
 
-@conversation_blueprint.route("/v1/conversation/<uuid:id>", methods=["GET"])
+@conversation_blueprint.route("/v1/conversation/<int:id>", methods=["GET"])
 @jwt_required()
-def get_conversation(id: UUID):
+def get_conversation(id: int):
     user_id = get_jwt_identity()
     user_object = User.query.filter_by(username=user_id).first()
 
