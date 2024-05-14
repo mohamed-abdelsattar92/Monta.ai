@@ -2,7 +2,6 @@ from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 import jwt as jwtLib
-import os
 
 from montaai.config import Config
 from montaai.helpers.database import db
@@ -37,5 +36,4 @@ def handle_internal_server_error(error):
 
 
 if __name__ == "__main__":
-    app.secret_key = os.urandom(24)
     app.run(debug=True)
