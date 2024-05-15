@@ -7,7 +7,10 @@ from montaai.helpers.database import redis_client, db
 from montaai.models.conversations import Conversation
 from montaai.models.messages import Message
 from montaai.models.users import User
-from montaai.helpers import save_current_conversation_to_db
+from montaai.helpers import (
+    save_current_conversation_to_db,
+    new_messages_keeper,
+)  # this can be implemented using session as well, but for the sake of simplicity we are using a global variable
 
 openai_client = openai.OpenAI()
 
@@ -25,7 +28,9 @@ def create_new_conversation():
 
     if current_conversation:
         conversation_data = json.loads(current_conversation.decode("utf-8"))
-        save_current_conversation_to_db(conversation_data, user_object.id)
+        save_current_conversation_to_db(
+            conversation_data["id"], new_messages_keeper, user_object.id
+        )
 
     new_db_conversation = Conversation(user_id=user_object.id)
     db.session.add(new_db_conversation)
@@ -65,7 +70,9 @@ def get_conversation(id: int):
     current_conversation_key = f"conversation:{user_id}:current"
     current_conversation_data = redis_client.get(current_conversation_key)
     current_conversation_data = json.loads(current_conversation_data.decode("utf-8"))
-    save_current_conversation_to_db(current_conversation_data, user_id)
+    save_current_conversation_to_db(
+        current_conversation_data["id"], new_messages_keeper, user_id
+    )
     redis_client.set(name=current_conversation_key, value=json.dumps(conversation_data))
 
     return jsonify({f"{id}": conversation_data}), 200
@@ -94,21 +101,22 @@ def send_message():
         )
 
     conversation_context = json.loads(conversation_context.decode("utf-8"))
+    new_message = {"role": "user", "content": user_input}
+    new_messages_keeper.append(new_message)
 
-    conversation_context["messages"].append({"role": "user", "content": user_input})
+    conversation_context["messages"].append(new_message)
 
     try:
         completions = openai_client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=conversation_context["messages"],
         )
-
-        conversation_context["messages"].append(
-            {
-                "role": completions.choices[0].message.role,
-                "content": completions.choices[0].message.content,
-            }
-        )
+        response_message = {
+            "role": completions.choices[0].message.role,
+            "content": completions.choices[0].message.content,
+        }
+        conversation_context["messages"].append(response_message)
+        new_messages_keeper.append(response_message)
 
         redis_client.set(name=conversation_key, value=json.dumps(conversation_context))
 
