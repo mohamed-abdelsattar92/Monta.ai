@@ -53,10 +53,11 @@ def create_new_conversation():
 @jwt_required()
 def get_conversation(id: int):
     user_id = get_jwt_identity()
+    user_object = User.query.filter_by(username=user_id).first()
 
     conversation = Conversation.query.filter_by(id=id).first()
 
-    if not conversation:
+    if not conversation or conversation.user_id != user_object.id:
         return jsonify({"error": "Conversation not found"}), 404
 
     messages: Message = Message.query.filter_by(conversation_id=conversation.id).all()
